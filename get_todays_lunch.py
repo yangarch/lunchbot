@@ -16,7 +16,7 @@ from slack_sdk import WebClient
 import imageio.v3 as iio
 import imageio
 
-with open(f'{os.environ["PROJECT_PATH"]}/cred/key.yaml', encoding="UTF-8") as f:
+with open(f'{os.environ["PROJECT_PATH"]}/lunchbot/cred/key.yaml', encoding="UTF-8") as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
 
 def get_screenshot(path,str_today):
