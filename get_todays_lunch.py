@@ -23,7 +23,7 @@ def get_screenshot(path,str_today):
     img_path = f"{path}/{str_today}.png"
     chrome_options = Options()
     chrome_options.add_argument('headless')
-    chrome_options.add_argument("window-size=400,3200")
+    chrome_options.add_argument("window-size=400,1600")
     url = cred["url"]
     
     #driver = webdriver.Chrome(DRIVER, options=chrome_options)
