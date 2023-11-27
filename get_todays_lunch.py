@@ -6,8 +6,6 @@ from datetime import date, datetime, timedelta
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -19,7 +17,10 @@ import imageio
 with open(f'{os.environ["PROJECT_PATH"]}/lunchbot/cred/key.yaml', encoding="UTF-8") as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
 
-def get_screenshot(path,str_today):
+def get_screenshot_old(path,str_today):
+    """deprecated. 
+
+    """
     img_path = f"{path}/{str_today}.png"
     chrome_options = Options()
     chrome_options.add_argument('headless')
@@ -27,7 +28,7 @@ def get_screenshot(path,str_today):
     url = cred["url"]
     
     #driver = webdriver.Chrome(DRIVER, options=chrome_options)
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
     driver.get(url)
     time.sleep(2)
     try:
@@ -42,31 +43,61 @@ def get_screenshot(path,str_today):
     
     driver.quit()
 
+def get_screenshot(path,str_today):
+    url = "https://bob.efoodist.com/notice/noticeDetail?notice_id=NT_230702YT71VR"
+    img_path = f"{path}/{str_today}.png"
+    
+    #chrome_options = Options()
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('headless')
+
+    service = Service(ChromeDriverManager().install())
+    #chromedriver_version = "114.0.5735.16"
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    #driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+
+    driver.get(url)
+    time.sleep(1)
+
+    # 이미지 URL 찾기
+    images = driver.find_elements(By.CSS_SELECTOR, "img[src$='.png']")    
+    src = images[0].get_attribute('src')
+
+    # 이미지 다운로드
+    response = requests.get(src)
+    if response.status_code == 200:
+        with open(img_path, 'wb') as file:
+            file.write(response.content)
+
+    driver.quit()  # 브라우저 종료
+
+
 def send_slack(path, str_today):
     TOKEN = cred["SLACK_TOKEN"]
     client = WebClient(TOKEN)
 
-    img1 = f"{path}/{str_today}-01.png"
-    img2 = f"{path}/{str_today}-02.png"
+    img = f"{path}/{str_today}.png"
+    #img1 = f"{path}/{str_today}-01.png"
+    #img2 = f"{path}/{str_today}-02.png"
 
     auth_test = client.auth_test()
     bot_user_id = auth_test["user_id"]
     
     #sending channel
-    channel = "wlog-lunch"
-    #channel = "wlog-testchannel_kiseok"
+    #channel = "wlog-lunch"
+    channel = "wlog-testchannel_kiseok"
 
-    upload_first_file =client.files_upload(
-        channels=channel,  # You can specify multiple channels here in the form of a string array
-        title=f"{str_today}_01",
-        file=img1,
-        initial_comment=f"{str_today}",
-    )
+    # upload_first_file =client.files_upload(
+    #     channels=channel,  # You can specify multiple channels here in the form of a string array
+    #     title=f"{str_today}_01",
+    #     file=img,
+    #     initial_comment=f"{str_today}",
+    # )
 
     upload_and_then_share_file = client.files_upload(
         channels=channel,  # You can specify multiple channels here in the form of a string array
-        title=f"{str_today}_02",
-        file=img2
+        title=f"{str_today}",
+        file=img
     )
 
     channel_code = upload_and_then_share_file["file"]['channels'][0] = upload_and_then_share_file["file"]['channels'][0]
@@ -122,6 +153,8 @@ def send_slack(path, str_today):
     )
 
 def image_cut(path, str_today):
+    """deprecated
+    """
     img = f"{path}/{str_today}.png"
     # Read the image
     img = iio.imread(img)
@@ -141,7 +174,7 @@ def main():
     
     get_screenshot(img_path,str_today)
     
-    image_cut(img_path,str_today)
+    #image_cut(img_path,str_today) depre
     
     send_slack(img_path,str_today)
     
