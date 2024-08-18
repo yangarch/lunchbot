@@ -3,6 +3,8 @@ import time
 import yaml
 import os
 from datetime import date, datetime, timedelta
+from dotenv import load_dotenv
+import stat
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,39 +13,19 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 from slack_sdk import WebClient
-import imageio.v3 as iio
-import imageio
 
 from PIL import Image
+
+load_dotenv()
 
 with open(f'{os.environ["PROJECT_PATH"]}/lunchbot/cred/key.yaml', encoding="UTF-8") as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
 
-def get_screenshot_old(path,str_today):
-    """deprecated. 
-
-    """
-    img_path = f"{path}/{str_today}.png"
-    chrome_options = Options()
-    chrome_options.add_argument('headless')
-    chrome_options.add_argument("window-size=400,1600")
-    url = cred["url"]
-    
-    #driver = webdriver.Chrome(DRIVER, options=chrome_options)
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
-    driver.get(url)
-    time.sleep(2)
-    try:
-        button = driver.find_element(By.CLASS_NAME, "close_pop_up")
-        button.click()
-        print("find element and click")
-        time.sleep(2)
-    except:
-        print("can't find element")
-    
-    screenshot = driver.save_screenshot(img_path)
-    
-    driver.quit()
+def set_chromedriver_permissions(path):
+    # 사용자 권한을 읽기, 쓰기, 실행 가능하게 설정
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+    # 그룹 및 다른 사용자도 실행 가능하게 설정
+    os.chmod(path, stat.S_IRUSR | stat.S_IXUSR)
 
 def get_screenshot(path,str_today):
     url = "https://bob.efoodist.com/notice/noticeDetail?notice_id=NT_230702YT71VR"
@@ -53,7 +35,11 @@ def get_screenshot(path,str_today):
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('headless')
 
-    service = Service(ChromeDriverManager().install())
+    driver_path = ChromeDriverManager().install()
+
+    set_chromedriver_permissions(driver_path)
+
+    service = Service(driver_path)
     #chromedriver_version = "114.0.5735.16"
     driver = webdriver.Chrome(service=service, options=chrome_options)
     #driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
@@ -118,71 +104,6 @@ def send_slack(path, str_today):
         initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표"
     )
 
-    channel_code = upload_and_then_share_file["file"]['channels'][0] = upload_and_then_share_file["file"]['channels'][0]
-    msg_timestamp = upload_and_then_share_file["file"]['shares']['public'][channel_code][0]['ts']
-    
-    #reaction part
-    # reaction_a = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "choice_a",
-    #     timestamp=msg_timestamp
-    # )
-
-    # reaction_b = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "choice_b",
-    #     timestamp=msg_timestamp
-    # )
-
-    # reaction_c = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "choice_c",
-    #     timestamp=msg_timestamp
-    # )
-
-    # reaction_s = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "green_salad",
-    #     timestamp=msg_timestamp
-    # )
-
-    # reaction_sw = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "sandwich",
-    #     timestamp=msg_timestamp
-    # )
-
-    # reaction_lb = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "bento",
-    #     timestamp=msg_timestamp
-    # )
-
-    # reaction_rm = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "ramen",
-    #     timestamp=msg_timestamp
-    # )
-
-    # reaction_rm = client.reactions_add(
-    #     channel = channel_code,
-    #     name = "zap",
-    #     timestamp=msg_timestamp
-    # )
-
-def image_cut_old(path, str_today):
-    """deprecated
-    """
-    img = f"{path}/{str_today}.png"
-    # Read the image
-    img = iio.imread(img)
-    # Cut the image in half
-    s1 = img[:1750, :]
-    s2 = img[1750:, :]
-
-    # Save each half
-    imageio.imsave(f"{path}/{str_today}-01.png", s1)
-    imageio.imsave(f"{path}/{str_today}-02.png", s2)
 
 def image_cut(path, str_today):
     """
