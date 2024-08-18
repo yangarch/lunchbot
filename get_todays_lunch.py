@@ -39,9 +39,13 @@ def get_screenshot(path, str_today):
 
     driver_path = ChromeDriverManager().install()
 
-    set_chromedriver_permissions(driver_path)
+    last_slash_index = driver_path.rfind("/")
 
-    service = Service(driver_path)
+    # chromedirver issue
+    new_path = driver_path[:last_slash_index] + "/chromedriver"
+    set_chromedriver_permissions(new_path)
+
+    service = Service(new_path)
     # chromedriver_version = "114.0.5735.16"
     driver = webdriver.Chrome(service=service, options=chrome_options)
     # driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
