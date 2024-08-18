@@ -21,40 +21,42 @@ load_dotenv()
 with open(f'{os.environ["PROJECT_PATH"]}/lunchbot/cred/key.yaml', encoding="UTF-8") as f:
     cred = yaml.load(f, Loader=yaml.FullLoader)
 
+
 def set_chromedriver_permissions(path):
     # 사용자 권한을 읽기, 쓰기, 실행 가능하게 설정
     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     # 그룹 및 다른 사용자도 실행 가능하게 설정
     os.chmod(path, stat.S_IRUSR | stat.S_IXUSR)
 
-def get_screenshot(path,str_today):
+
+def get_screenshot(path, str_today):
     url = "https://bob.efoodist.com/notice/noticeDetail?notice_id=NT_230702YT71VR"
     img_path = f"{path}/{str_today}.png"
-    
-    #chrome_options = Options()
+
+    # chrome_options = Options()
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('headless')
+    chrome_options.add_argument("headless")
 
     driver_path = ChromeDriverManager().install()
 
     set_chromedriver_permissions(driver_path)
 
     service = Service(driver_path)
-    #chromedriver_version = "114.0.5735.16"
+    # chromedriver_version = "114.0.5735.16"
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    #driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+    # driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
     driver.get(url)
     time.sleep(1)
 
     # 이미지 URL 찾기
-    images = driver.find_elements(By.CSS_SELECTOR, "img[src$='.png']")    
-    src = images[0].get_attribute('src')
+    images = driver.find_elements(By.CSS_SELECTOR, "img[src$='.png']")
+    src = images[0].get_attribute("src")
 
     # 이미지 다운로드
     response = requests.get(src)
     if response.status_code == 200:
-        with open(img_path, 'wb') as file:
+        with open(img_path, "wb") as file:
             file.write(response.content)
 
     driver.quit()  # 브라우저 종료
@@ -64,7 +66,7 @@ def send_slack(path, str_today):
     TOKEN = cred["SLACK_TOKEN"]
     client = WebClient(TOKEN)
 
-    #calc date
+    # calc date
     # 현재 날짜 구하기
     current_date = datetime.now()
 
@@ -73,22 +75,22 @@ def send_slack(path, str_today):
 
     # 이번 주의 월요일과 금요일 날짜 구하기
     monday_date = current_date - timedelta(days=current_weekday)  # 월요일
-    str_mon = datetime.strftime(monday_date, '%m월%d일')
+    str_mon = datetime.strftime(monday_date, "%m월%d일")
     friday_date = monday_date + timedelta(days=4)  # 금요일
-    str_fri = datetime.strftime(friday_date, '%m월%d일')
+    str_fri = datetime.strftime(friday_date, "%m월%d일")
     # 이번 주가 몇 번째 주인지 구하기
     week_number = current_date.isocalendar()[1]
 
     img = f"{path}/{str_today}.png"
-    #img1 = f"{path}/{str_today}-01.png"
-    #img2 = f"{path}/{str_today}-02.png"
+    # img1 = f"{path}/{str_today}-01.png"
+    # img2 = f"{path}/{str_today}-02.png"
 
     auth_test = client.auth_test()
     bot_user_id = auth_test["user_id"]
-    
-    #sending channel
+
+    # sending channel
     channel = "wlog-lunch"
-    #channel = "wlog-testchannel_kiseok"
+    # channel = "wlog-testchannel_kiseok"
 
     # upload_first_file =client.files_upload(
     #     channels=channel,  # You can specify multiple channels here in the form of a string array
@@ -101,7 +103,7 @@ def send_slack(path, str_today):
         channels=channel,  # You can specify multiple channels here in the form of a string array
         title=f"{str_today}",
         file=img,
-        initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표"
+        initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표",
     )
 
 
@@ -118,7 +120,7 @@ def image_cut(path, str_today):
 
     # 점심 메뉴 섹션의 y 좌표
     upper_y = 840  # 점심 메뉴 시작 부분
-    lower_y = 2480 # 점심 메뉴 끝 부분
+    lower_y = 2480  # 점심 메뉴 끝 부분
     """
     header 90 - 320
     칸 340
@@ -139,12 +141,11 @@ def image_cut(path, str_today):
 
         comb_width = header.width + cropped.width
         comb_height = header.height
-        comb_image = Image.new('RGB', (comb_width, comb_height))
-        comb_image.paste(header,(0,0))
+        comb_image = Image.new("RGB", (comb_width, comb_height))
+        comb_image.paste(header, (0, 0))
         comb_image.paste(cropped, (header.width, 0))
 
-
-        cropped_path = f'lunch_menu_{day}.png'
+        cropped_path = f"lunch_menu_{day}.png"
         comb_image.save(cropped_path)
         cropped_images_paths.append(cropped_path)
 
@@ -152,16 +153,18 @@ def image_cut(path, str_today):
 def main():
     today = datetime.now()
     print(f"{today} lunchbot starting")
-    str_today = datetime.strftime(today, '%Y-%m-%d')
+    str_today = datetime.strftime(today, "%Y-%m-%d")
     img_path = f"{os.environ['PROJECT_PATH']}/lunchbot/screenshot"
-    
-    get_screenshot(img_path,str_today)
-    
-    #image_cut(img_path,str_today)
-    
-    send_slack(img_path,str_today)
-    
+
+    get_screenshot(img_path, str_today)
+
+    # image_cut(img_path,str_today)
+
+    send_slack(img_path, str_today)
+
     print(f"{today} lunchbot ends")
+
+
 if __name__ == "__main__":
     main()
 
