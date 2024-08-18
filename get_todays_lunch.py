@@ -103,8 +103,8 @@ def send_slack(path, str_today):
     #     initial_comment=f"{str_today}",
     # )
 
-    upload_and_then_share_file = client.files_upload(
-        channels=channel,  # You can specify multiple channels here in the form of a string array
+    upload_and_then_share_file = client.files_upload_v2(
+        channel=channel,  # You can specify multiple channels here in the form of a string array
         title=f"{str_today}",
         file=img,
         initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표",
