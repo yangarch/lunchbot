@@ -55,6 +55,8 @@ def get_screenshot(path, str_today):
 
     # 이미지 URL 찾기
     images = driver.find_elements(By.CSS_SELECTOR, "img[src$='.png']")
+    if not images:
+        images = driver.find_elements(By.CSS_SELECTOR, "img[src$='.jpg']")
     src = images[0].get_attribute("src")
 
     # 이미지 다운로드
