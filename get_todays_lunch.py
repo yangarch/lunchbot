@@ -98,7 +98,7 @@ def send_slack(path, str_today):
         upload_response.raise_for_status()
 
     # Step 3: complete upload and share
-    channel = "wlog-lunch"
+    channel = "C04EV1KDY2D"
     client.files_completeUploadExternal(
         files=[{
             "id": file_id,
