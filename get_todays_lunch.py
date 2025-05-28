@@ -99,7 +99,15 @@ def send_slack(path, str_today):
 
     # Step 3: complete upload and share
     channel_name = "wlog-lunch"
-    channel_id = "C04EV1KDY2D"
+    
+    response = client.conversations_list()
+    channel_id = None
+    for ch in response["channels"]:
+        if ch["name"] == channel_name:
+            channel_id = ch["id"]
+            break
+    if channel_id is None:
+        raise ValueError(f"Channel '{channel_name}' not found.")
     
     client.files_completeUploadExternal(
         files=[{
@@ -110,17 +118,20 @@ def send_slack(path, str_today):
         initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표"
     )
 
+    file_info = client.files_info(file=file_id)
+    image_url = file_info["file"]["url_private"]
+
     client.chat_postMessage(
-    channel=channel_id,
-    text=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표",
-    blocks=[
-        {
-            "type": "image",
-            "image_url": upload_url,
-            "alt_text": f"{str_today} 식단표"
-        }
-    ]
-)
+        channel=channel_id,
+        text=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표",
+        blocks=[
+            {
+                "type": "image",
+                "image_url": image_url,
+                "alt_text": f"{str_today} 식단표"
+            }
+        ]
+    )
 
 
 def image_cut(path, str_today):
