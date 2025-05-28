@@ -98,13 +98,21 @@ def send_slack(path, str_today):
         upload_response.raise_for_status()
 
     # Step 3: complete upload and share
-    channel = "C04EV1KDY2D"
+    channel_name = "wlog-lunch"
+    response = client.conversations_list()
+    channel_id = None
+    for ch in response["channels"]:
+        if ch["name"] == channel_name:
+            channel_id = ch["id"]
+            break
+    if channel_id is None:
+        raise ValueError(f"Channel '{channel_name}' not found.")
     client.files_completeUploadExternal(
         files=[{
             "id": file_id,
             "title": f"{str_today}"
         }],
-        channel_id=channel,
+        channel_id=channel_id,
         initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표"
     )
 
