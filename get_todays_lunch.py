@@ -72,65 +72,44 @@ def send_slack(path, str_today):
     TOKEN = cred["SLACK_TOKEN"]
     client = WebClient(TOKEN)
 
+    # calc date
+    # 현재 날짜 구하기
     current_date = datetime.now()
+
+    # 현재 날짜의 요일 구하기 (월요일은 0, 일요일은 6)
     current_weekday = current_date.weekday()
-    monday_date = current_date - timedelta(days=current_weekday)
+
+    # 이번 주의 월요일과 금요일 날짜 구하기
+    monday_date = current_date - timedelta(days=current_weekday)  # 월요일
     str_mon = datetime.strftime(monday_date, "%m월%d일")
-    friday_date = monday_date + timedelta(days=4)
+    friday_date = monday_date + timedelta(days=4)  # 금요일
     str_fri = datetime.strftime(friday_date, "%m월%d일")
+    # 이번 주가 몇 번째 주인지 구하기
     week_number = current_date.isocalendar()[1]
 
-    img_path = f"{path}/{str_today}.png"
-    filesize = os.path.getsize(img_path)
-    filename = os.path.basename(img_path)
+    img = f"{path}/{str_today}.png"
+    # img1 = f"{path}/{str_today}-01.png"
+    # img2 = f"{path}/{str_today}-02.png"
 
-    # Step 1: get upload URL
-    upload_url_response = client.files_getUploadURLExternal(
-        filename=filename,
-        length=filesize
-    )
-    upload_url = upload_url_response["upload_url"]
-    file_id = upload_url_response["file_id"]
+    auth_test = client.auth_test()
+    bot_user_id = auth_test["user_id"]
 
-    # Step 2: upload file
-    with open(img_path, "rb") as f:
-        upload_response = requests.put(upload_url, data=f)
-        upload_response.raise_for_status()
+    # sending channel
+    channel = "wlog-lunch"
+    # channel = "wlog-testchannel_kiseok"
 
-    # Step 3: complete upload and share
-    channel_name = "wlog-lunch"
-    
-    response = client.conversations_list()
-    channel_id = None
-    for ch in response["channels"]:
-        if ch["name"] == channel_name:
-            channel_id = ch["id"]
-            break
-    if channel_id is None:
-        raise ValueError(f"Channel '{channel_name}' not found.")
-    
-    client.files_completeUploadExternal(
-        files=[{
-            "id": file_id,
-            "title": f"{str_today}"
-        }],
-        channel_id=channel_id,
-        initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표"
-    )
+    # upload_first_file =client.files_upload(
+    #     channels=channel,  # You can specify multiple channels here in the form of a string array
+    #     title=f"{str_today}_01",
+    #     file=img,
+    #     initial_comment=f"{str_today}",
+    # )
 
-    file_info = client.files_info(file=file_id)
-    image_url = file_info["file"]["url_private"]
-
-    client.chat_postMessage(
-        channel=channel_id,
-        text=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표",
-        blocks=[
-            {
-                "type": "image",
-                "image_url": image_url,
-                "alt_text": f"{str_today} 식단표"
-            }
-        ]
+    upload_and_then_share_file = client.files_upload(
+        channels=channel,  # You can specify multiple channels here in the form of a string array
+        title=f"{str_today}",
+        file=img,
+        initial_comment=f"{week_number}주차 {str_mon} ~ {str_fri} 식단표",
     )
 
 
